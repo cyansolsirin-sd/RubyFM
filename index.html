@@ -345,7 +345,7 @@
 
     <!-- 1. 欢迎页面 -->
     <div id="welcome-page" class="page active">
-        <button class="btn-start" onclick="startJump()">INITIATE LAUNCH</button>
+<button class="btn-start" onclick="playBGM(); startJump();">INITIATE LAUNCH</button>
     </div>
 
     <!-- 过场动画层 -->
@@ -1026,7 +1026,7 @@
     </div>
 
     <script>
-// --- BGM 播放列表配置 (已切换为云端外链版) ---
+// 1. 定义播放列表
 const playlist = [
     "https://files.catbox.moe/kdt1a7.mp3", 
     "https://files.catbox.moe/a0dobb.mp3", 
@@ -1035,21 +1035,32 @@ const playlist = [
     "https://files.catbox.moe/ulc83o.mp3"
 ];
 let currentTrackIndex = 0;
+const bgm = document.getElementById('bgm');
 
-// 初始化播放列表逻辑
-function initPlaylist() {
-    const bgm = document.getElementById('bgm');
-    
-    // 当一首歌播放结束时触发
-    bgm.onended = function() {
-        currentTrackIndex++; // 准备下一首
-        if (currentTrackIndex >= playlist.length) {
-            currentTrackIndex = 0; // 如果是最后一首，回到第一首
-        }
+// 2. 核心播放函数（解决自动播放拦截）
+function playBGM() {
+    if (bgm.src !== playlist[currentTrackIndex]) {
         bgm.src = playlist[currentTrackIndex];
-        bgm.play();
-        console.log("正在播放: " + playlist[currentTrackIndex]);
-    };
+        bgm.load();
+    }
+    bgm.play().then(() => {
+        updateMusicStatus("ON");
+    }).catch(e => {
+        console.log("播放被拦截，请点击音乐按钮");
+        updateMusicStatus("OFF (CLICK TO PLAY)");
+    });
+}
+
+// 3. 自动切歌监听
+bgm.addEventListener('ended', function() {
+    currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+    playBGM();
+});
+
+// 4. 更新按钮文字的辅助函数
+function updateMusicStatus(status) {
+    const btn = document.getElementById('music-control');
+    if(btn) btn.innerText = '♫ MUSIC: ' + status;
 }
 
 // 页面加载完成后初始化
