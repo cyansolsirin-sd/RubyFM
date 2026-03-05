@@ -1025,123 +1025,114 @@
         </div>
     </div>
 
-    <script>
-// 1. 定义播放列表
-const playlist = [
-    "https://files.catbox.moe/kdt1a7.mp3", 
-    "https://files.catbox.moe/a0dobb.mp3", 
-    "https://files.catbox.moe/rwpvib.mp3",
-    "https://files.catbox.moe/zptnnj.mp3", 
-    "https://files.catbox.moe/ulc83o.mp3"
-];
-let currentTrackIndex = 0;
-const bgm = document.getElementById('bgm');
+<script>
+    // --- 1. 你的自定义数据 (可以在这里修改) ---
+    const playlist = [
+        "https://files.catbox.moe/kdt1a7.mp3", 
+        "https://files.catbox.moe/a0dobb.mp3", 
+        "https://files.catbox.moe/rwpvib.mp3",
+        "https://files.catbox.moe/zptnnj.mp3", 
+        "https://files.catbox.moe/ulc83o.mp3"
+    ];
+    const titleText = "MILANO FLIGHT LOG - GALAXY ROCK #0422"; 
 
-// 2. 核心播放函数（解决自动播放拦截）
-function playBGM() {
-    if (bgm.src !== playlist[currentTrackIndex]) {
-        bgm.src = playlist[currentTrackIndex];
-        bgm.load();
+    // --- 2. 核心变量 ---
+    let currentTrackIndex = 0;
+    let typeIndex = 0;
+    let typeInterval;
+    const bgm = document.getElementById('bgm');
+
+    // --- 3. 页面跳转逻辑 ---
+    function goToPage(pageId) {
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        const target = document.getElementById(pageId);
+        if (target) target.classList.add('active');
     }
-    bgm.play().then(() => {
-        updateMusicStatus("ON");
-    }).catch(e => {
-        console.log("播放被拦截，请点击音乐按钮");
-        updateMusicStatus("OFF (CLICK TO PLAY)");
-    });
-}
 
-// 3. 自动切歌监听
-bgm.addEventListener('ended', function() {
-    currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-    playBGM();
-});
-
-// 4. 更新按钮文字的辅助函数
-function updateMusicStatus(status) {
-    const btn = document.getElementById('music-control');
-    if(btn) btn.innerText = '♫ MUSIC: ' + status;
-}
-
-// 页面加载完成后初始化
-window.addEventListener('DOMContentLoaded', initPlaylist);
-        function goToPage(pageId) {
-            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-        }
-
-        function startJump() {
-            const overlay = document.getElementById('jump-overlay');
+    function startJump() {
+        const overlay = document.getElementById('jump-overlay');
+        if (overlay) {
             overlay.style.display = 'block';
-            
-            // 尝试播放音乐
-            const bgm = document.getElementById('bgm');
-            const musicBtn = document.getElementById('music-control');
-            bgm.play().then(() => {
-                musicBtn.innerText = "♫ MUSIC: ON";
-                musicBtn.classList.add('playing');
-            }).catch(e => {
-                console.log("自动播放被阻止，用户需手动点击音乐按钮");
-            });
-
             overlay.animate([
                 { opacity: 0, filter: 'blur(0px)' },
                 { opacity: 1, filter: 'blur(20px)', offset: 0.5 },
                 { opacity: 0, filter: 'blur(0px)' }
             ], { duration: 1500, easing: 'ease-in-out' });
-
-            setTimeout(() => goToPage('bridge-page'), 750);
-            setTimeout(() => overlay.style.display = 'none', 1500);
         }
+        setTimeout(() => goToPage('bridge-page'), 750);
+        setTimeout(() => { if(overlay) overlay.style.display = 'none'; }, 1500);
+    }
 
-        function toggleMusic() {
-            const bgm = document.getElementById('bgm');
-            const musicBtn = document.getElementById('music-control');
-            
-            if (bgm.paused) {
-                bgm.play();
-                musicBtn.innerText = "♫ MUSIC: ON";
-                musicBtn.classList.add('playing');
+    // --- 4. 音乐逻辑 ---
+    function playBGM() {
+        if (!bgm) return;
+        if (bgm.src !== playlist[currentTrackIndex]) {
+            bgm.src = playlist[currentTrackIndex];
+            bgm.load();
+        }
+        bgm.play().then(() => {
+            updateMusicStatus("ON");
+        }).catch(e => {
+            console.log("播放被拦截");
+            updateMusicStatus("OFF (CLICK TO PLAY)");
+        });
+    }
+
+    function toggleMusic() {
+        if (!bgm) return;
+        if (bgm.paused) { playBGM(); } 
+        else { bgm.pause(); updateMusicStatus("OFF"); }
+    }
+
+    if (bgm) {
+        bgm.addEventListener('ended', () => {
+            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+            playBGM();
+        });
+    }
+
+    function updateMusicStatus(status) {
+        const btn = document.getElementById('music-control');
+        if (btn) btn.innerText = '♫ MUSIC: ' + status;
+    }
+
+    // --- 5. 角色弹窗逻辑 ---
+    function showTooltip(title, desc) {
+        const tTitle = document.getElementById('tooltip-title');
+        const tDesc = document.getElementById('tooltip-desc');
+        const tBox = document.getElementById('tooltip');
+        if (tTitle) tTitle.innerText = title;
+        if (tDesc) tDesc.innerText = desc;
+        if (tBox) tBox.style.display = 'block';
+    }
+
+    function hideTooltip() {
+        const tBox = document.getElementById('tooltip');
+        if (tBox) tBox.style.display = 'none';
+    }
+
+    // --- 6. 打字机逻辑 ---
+    function startTypewriter() {
+        const el = document.getElementById('typewriter-text');
+        if (!el) return;
+        el.innerText = '';
+        typeIndex = 0;
+        clearInterval(typeInterval);
+        typeInterval = setInterval(() => {
+            if (typeIndex < titleText.length) {
+                el.innerText += titleText.charAt(typeIndex);
+                typeIndex++;
             } else {
-                bgm.pause();
-                musicBtn.innerText = "♫ MUSIC: OFF";
-                musicBtn.classList.remove('playing');
+                clearInterval(typeInterval);
             }
-        }
+        }, 100);
+    }
 
-        function logout() {
-            goToPage('welcome-page');
-        }
-
-        function showTooltip(title, desc) {
-            document.getElementById('tooltip-title').innerText = title;
-            document.getElementById('tooltip-desc').innerText = desc;
-            document.getElementById('tooltip').style.display = 'block';
-        }
-
-        function hideTooltip() {
-            document.getElementById('tooltip').style.display = 'none';
-        }
-
-        const titleText = "MILANO FLIGHT LOG - ENTRY #0422";
-        let typeIndex = 0;
-        let typeInterval;
-
-        function startTypewriter() {
-            const el = document.getElementById('typewriter-text');
-            el.innerText = '';
-            typeIndex = 0;
-            clearInterval(typeInterval);
-            
-            typeInterval = setInterval(() => {
-                if (typeIndex < titleText.length) {
-                    el.innerText += titleText.charAt(typeIndex);
-                    typeIndex++;
-                } else {
-                    clearInterval(typeInterval);
-                }
-            }, 100);
-        }
-    </script>
+    function logout() {
+        if (bgm) bgm.pause();
+        updateMusicStatus("OFF");
+        goToPage('welcome-page');
+    }
+</script>
 </body>
 </html>
